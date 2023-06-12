@@ -1,0 +1,39 @@
+USE [db_a9905c_ecrsa1]
+GO
+
+/****** Object:  Table [dbo].[tblInternal]    Script Date: 2023/05/25 16:37:02 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[tblInternal](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[date] [nvarchar](max) NULL,
+	[scrapper] [nvarchar](max) NULL,
+	[subgrade] [nvarchar](max) NULL,
+	[waste] [nvarchar](max) NULL,
+	[aluminium] [nvarchar](max) NULL,
+	[castAlum] [nvarchar](max) NULL,
+	[copper] [nvarchar](max) NULL,
+	[stainlessSteel] [nvarchar](max) NULL,
+	[steel] [nvarchar](max) NULL,
+	[batteries] [nvarchar](max) NULL,
+	[brass] [nvarchar](max) NULL,
+	[plastic] [nvarchar](max) NULL,
+	[cables] [nvarchar](max) NULL,
+	[aluminiumUnclean] [nvarchar](max) NULL,
+	[copperUnclean] [nvarchar](max) NULL,
+	[steelUnclean] [nvarchar](max) NULL,
+	[plasticUnclean] [nvarchar](max) NULL,
+	[lowGradePCB] [nvarchar](max) NULL,
+	[mediumGradePCB] [nvarchar](max) NULL,
+	[highGradePCB] [nvarchar](max) NULL,
+	[ram] [nvarchar](max) NULL,
+	[sync] [int] NULL,
+	[modDate] [nvarchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+
