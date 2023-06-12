@@ -1,11 +1,12 @@
-import {
-  getTransaction,
-  Ledger,
-  sendMessage,
-  TransactionId,
-} from "@signumjs/core";
+import { Ledger, TransactionId } from "@signumjs/core";
 import { hashSHA256 } from "@signumjs/crypto";
 import { hexToTransactionId } from "./convertTransactionId";
+
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 function generateFakeTx(text: string) {
   const hash = hashSHA256(text);
@@ -24,8 +25,13 @@ function generateFakeTx(text: string) {
 // @ts-ignore
 export const DryLedger: Ledger = {
   message: {
-    sendMessage: ({ message }) => Promise.resolve(generateFakeTx(message)),
-    sendEncryptedMessage: ({ message }) =>
-      Promise.resolve(generateFakeTx(message)),
+    sendMessage: async ({ message }) => {
+      await sleep(50);
+      return generateFakeTx(message);
+    },
+    sendEncryptedMessage: async ({ message }) => {
+      await sleep(50);
+      return generateFakeTx(message);
+    },
   },
 };

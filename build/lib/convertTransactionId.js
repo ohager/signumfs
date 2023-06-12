@@ -1,10 +1,12 @@
-import {
-  convertDecStringToHexString,
-  convertHexStringToDecString,
-} from "@signumjs/util";
-export function transactionIdToHex(txId) {
-  return convertDecStringToHexString(txId).padStart(16, "0");
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.hexToTransactionId = exports.transactionIdToHex = void 0;
+const util_1 = require("@signumjs/util");
+function transactionIdToHex(txId) {
+    return (0, util_1.convertDecStringToHexString)(txId).padStart(16, "0");
 }
-export function hexToTransactionId(hex) {
-  return convertHexStringToDecString(hex);
+exports.transactionIdToHex = transactionIdToHex;
+function hexToTransactionId(hex) {
+    return (0, util_1.convertHexStringToDecString)(hex);
 }
+exports.hexToTransactionId = hexToTransactionId;

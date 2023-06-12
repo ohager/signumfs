@@ -15,12 +15,14 @@ import { Amount } from "@signumjs/util";
 import { transactionIdToHex } from "./lib/convertTransactionId";
 import { calculateTransactionFee } from "./lib/calculateTransactionFee";
 import { DryLedger } from "./lib/dryLedger";
+import { LedgerReadStream } from "./lib/ledgerReadStream";
+import { writeFile } from "fs/promises";
 
 export interface SignumFSContext {
   nodeHost: string;
   seed: string;
   dryRun: boolean;
-  chunksPerBlock: number;
+  chunksPerBlock?: number;
 }
 
 interface SignumFSFileInfo {
@@ -34,14 +36,26 @@ interface CreateMetadataArgs {
   info: SignumFSFileInfo;
   chunkCount: number;
 }
-//
+
+const KibiByte = 1024;
+const MebiByte = 1024 * KibiByte;
+export const Defaults = {
+  ChunkSize: 128,
+  MaxUpload: 5 * MebiByte,
+};
+
 export class SignumFS extends EventEmitter {
   private readonly ledger: Ledger;
   private readonly keys: Keys;
   private readonly dryRun: boolean;
   private readonly chunksPerBlock: number;
 
-  constructor({ nodeHost, seed, dryRun, chunksPerBlock }: SignumFSContext) {
+  constructor({
+    nodeHost,
+    seed,
+    dryRun,
+    chunksPerBlock = Defaults.ChunkSize,
+  }: SignumFSContext) {
     super();
     this.ledger = dryRun
       ? DryLedger
@@ -58,6 +72,12 @@ export class SignumFS extends EventEmitter {
     }
     if (!info.size) {
       throw new Error(`File is empty: ${filePath}`);
+    }
+
+    if (info.size > Defaults.MaxUpload) {
+      throw new Error(
+        `File exceeds allowed size limit (${Defaults.MaxUpload} byte): ${filePath}`
+      );
     }
 
     return {
@@ -95,6 +115,8 @@ export class SignumFS extends EventEmitter {
       }
     }
 
+    // TODO: consider compression
+
     return {
       sha512: hash.digest("hex"),
       txId,
@@ -102,8 +124,43 @@ export class SignumFS extends EventEmitter {
     };
   }
 
-  async downloadFile(txId: string) {}
+  async downloadFile(metadataTxId: string) {
+    const readable = new LedgerReadStream(metadataTxId, this.ledger);
+    const { data, sha512 } = await this.downloadChunks(readable);
+    if (!readable.metadata) {
+      throw new Error("No metadata available");
+    }
 
+    if (readable.metadata.xcmp) {
+      // TODO: consider decompression
+    }
+
+    await writeFile("signum-" + readable.metadata.nm, data);
+
+    if (readable.metadata.xsha512 !== sha512) {
+      throw new Error(
+        "Hashes don't match - most probably the downloaded file is corrupted"
+      );
+    }
+
+    return readable.metadata;
+  }
+
+  private async downloadChunks(readable: LedgerReadStream) {
+    let buf: Buffer | null = null;
+    const hash = createHash("sha512");
+    for await (const chunk of readable) {
+      hash.update(chunk.toString("hex"));
+      buf = !buf ? chunk : Buffer.concat([chunk, buf]);
+    }
+    if (!buf) {
+      throw Error("No data!");
+    }
+    return {
+      data: buf,
+      sha512: hash.digest("hex"),
+    };
+  }
   private async createMetadata({
     txId,
     sha512,
@@ -120,7 +177,10 @@ export class SignumFS extends EventEmitter {
       xid: txId,
       xsha512: sha512,
     };
-    const transaction = this.uploadDataToLedger(JSON.stringify(metadata), true);
+    const transaction = await this.uploadDataToLedger(
+      JSON.stringify(metadata),
+      true
+    );
     return {
       feePlanck: Amount.fromSigna(0.01)
         .multiply(chunkCount + 1)
@@ -139,7 +199,7 @@ export class SignumFS extends EventEmitter {
       message: data,
       messageIsText: isText,
       deadline: 24,
-      feePlanck: calculateTransactionFee(data).getPlanck(),
+      feePlanck: calculateTransactionFee(data, isText).getPlanck(),
       recipientId: Address.fromPublicKey(this.keys.publicKey).getNumericId(), // send to self
       senderPrivateKey: this.keys.signPrivateKey,
       senderPublicKey: this.keys.publicKey,

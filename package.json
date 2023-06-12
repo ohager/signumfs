@@ -2,7 +2,10 @@
   "name": "signumfs",
   "version": "1.0.0",
   "description": "File-based storage solution for Signum blockchain",
-  "main": "index.js",
+  "main": "build/signumfs-cli.js",
+  "bin": {
+    "signumfs": "./build/signumfs-cli.js"
+  },
   "repository": "git@github.com:ohager/signumfs.git",
   "author": "ohager <oliver@devbutze.com>",
   "license": "Apache-2.0",
@@ -15,7 +18,7 @@
     "prepare": "husky install"
   },
   "engines": {
-    "node": "18"
+    "node": "16"
   },
   "devDependencies": {
     "@types/jest": "^29.5.2",

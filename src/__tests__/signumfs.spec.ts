@@ -5,9 +5,11 @@ import { DryLedger } from "../lib/dryLedger";
 import { Amount } from "@signumjs/util";
 import { fileURLToPath } from "url";
 
-// @ts-ignore
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// if(__filename === undefined){
+//   // @ts-ignore
+//   const __filename = fileURLToPath(import.meta.url);
+//   const __dirname = path.dirname(__filename);
+// }
 describe("SignumFS", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -66,6 +68,18 @@ describe("SignumFS", () => {
         xsha512:
           "3929fee5d27a7e9693b1f0a60159b4aa5b9414e3a57415319457dfe13aa90e224fb03e3b5d863484c309dd6275b637d6a99bd87580574e7c5549124415dfb6c9",
       });
+    });
+  });
+  describe("downloadFile", () => {
+    it("should run a dry run - file: testfile1.txt", async () => {
+      const signumfs = new SignumFS({
+        dryRun: true,
+        chunksPerBlock: 256,
+        seed: "seed",
+        nodeHost: "http://localhost:6876",
+      });
+
+      const result = await signumfs.downloadFile("15771118143703187517");
     });
   });
 });
