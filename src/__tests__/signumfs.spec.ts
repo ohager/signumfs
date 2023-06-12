@@ -1,9 +1,17 @@
+import { expect, jest } from "@jest/globals";
 import { SignumFS } from "../signumfs";
 import * as path from "path";
 import { DryLedger } from "../lib/dryLedger";
 import { Amount } from "@signumjs/util";
+import { fileURLToPath } from "url";
 
+// @ts-ignore
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 describe("SignumFS", () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
   describe("uploadFile", () => {
     it("should run a dry run - file: testfile1.txt", async () => {
       const signumfs = new SignumFS({
