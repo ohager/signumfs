@@ -34,10 +34,10 @@ const KibiByte = 1024;
 const MebiByte = 1024 * KibiByte;
 exports.Defaults = {
     ChunkSize: 128,
-    MaxUpload: 5 * MebiByte
+    MaxUpload: 5 * MebiByte,
 };
 class SignumFS extends events_1.EventEmitter {
-    constructor({ nodeHost, seed, dryRun, chunksPerBlock = exports.Defaults.ChunkSize }) {
+    constructor({ nodeHost, seed, dryRun, chunksPerBlock = exports.Defaults.ChunkSize, }) {
         super();
         this.ledger = dryRun
             ? dryLedger_1.DryLedger
@@ -122,7 +122,7 @@ class SignumFS extends events_1.EventEmitter {
             if (readable.metadata.xcmp) {
                 // TODO: consider decompression
             }
-            yield (0, promises_1.writeFile)('signum-' + readable.metadata.nm, data);
+            yield (0, promises_1.writeFile)("signum-" + readable.metadata.nm, data);
             if (readable.metadata.xsha512 !== sha512) {
                 throw new Error("Hashes don't match - most probably the downloaded file is corrupted");
             }
@@ -140,7 +140,7 @@ class SignumFS extends events_1.EventEmitter {
                     _d = readable_2_1.value;
                     _a = false;
                     const chunk = _d;
-                    hash.update(chunk.toString('hex'));
+                    hash.update(chunk.toString("hex"));
                     buf = !buf ? chunk : Buffer.concat([chunk, buf]);
                 }
             }
@@ -152,11 +152,11 @@ class SignumFS extends events_1.EventEmitter {
                 finally { if (e_2) throw e_2.error; }
             }
             if (!buf) {
-                throw Error('No data!');
+                throw Error("No data!");
             }
             return {
                 data: buf,
-                sha512: hash.digest('hex')
+                sha512: hash.digest("hex"),
             };
         });
     }

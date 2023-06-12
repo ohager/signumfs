@@ -22,7 +22,6 @@ function generateFakeTx(text: string) {
     unsignedTransactionBytes: "",
   } as TransactionId;
 }
-// @ts-ignore
 export const DryLedger: Ledger = {
   message: {
     sendMessage: async ({ message }) => {
@@ -33,5 +32,17 @@ export const DryLedger: Ledger = {
       await sleep(50);
       return generateFakeTx(message);
     },
+  },
+  // @ts-ignore
+  network: {
+    getMiningInfo: () =>
+      Promise.resolve({
+        timestamp: "1",
+        height: "1",
+        lastBlockReward: "1000000000000",
+        baseTarget: "100000",
+        averageCommitmentNQT: "0",
+        generationSignature: "deadbeef",
+      }),
   },
 };

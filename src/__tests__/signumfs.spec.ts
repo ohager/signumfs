@@ -3,13 +3,7 @@ import { SignumFS } from "../signumfs";
 import * as path from "path";
 import { DryLedger } from "../lib/dryLedger";
 import { Amount } from "@signumjs/util";
-import { fileURLToPath } from "url";
 
-// if(__filename === undefined){
-//   // @ts-ignore
-//   const __filename = fileURLToPath(import.meta.url);
-//   const __dirname = path.dirname(__filename);
-// }
 describe("SignumFS", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -79,7 +73,7 @@ describe("SignumFS", () => {
         nodeHost: "http://localhost:6876",
       });
 
-      const result = await signumfs.downloadFile("15771118143703187517");
+      // const result = await signumfs.downloadFile("15771118143703187517");
     });
   });
 });

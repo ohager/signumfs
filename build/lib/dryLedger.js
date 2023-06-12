@@ -13,7 +13,7 @@ exports.DryLedger = void 0;
 const crypto_1 = require("@signumjs/crypto");
 const convertTransactionId_1 = require("./convertTransactionId");
 function sleep(ms) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
 }
@@ -41,6 +41,6 @@ exports.DryLedger = {
         sendEncryptedMessage: ({ message }) => __awaiter(void 0, void 0, void 0, function* () {
             yield sleep(50);
             return generateFakeTx(message);
-        })
+        }),
     },
 };

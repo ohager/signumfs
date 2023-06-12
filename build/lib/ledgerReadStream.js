@@ -21,7 +21,8 @@ class LedgerReadStream extends stream_1.Readable {
     }
     _construct(callback) {
         // testing reachability
-        this.ledger.network.getMiningInfo()
+        this.ledger.network
+            .getMiningInfo()
             .then(() => callback())
             .catch(() => callback(new LedgerStreamError("Seems that Ledger is not reachable")));
     }
@@ -30,9 +31,10 @@ class LedgerReadStream extends stream_1.Readable {
             this.push(null);
             return;
         }
-        this.ledger.transaction.getTransaction(this.nextTx)
-            .then(tx => {
-            if (!(tx.attachment && tx.attachment['version.Message'])) {
+        this.ledger.transaction
+            .getTransaction(this.nextTx)
+            .then((tx) => {
+            if (!(tx.attachment && tx.attachment["version.Message"])) {
                 this.destroy(new LedgerStreamError("Transaction has no message attachment"));
             }
             if (this.nextTx === this.metaDataTxId) {
@@ -41,9 +43,9 @@ class LedgerReadStream extends stream_1.Readable {
                 return this._read();
             }
             this.nextTx = (0, convertTransactionId_1.hexToTransactionId)(tx.attachment.message.substring(0, 16));
-            this.push(tx.attachment.message.substring(16), 'hex');
+            this.push(tx.attachment.message.substring(16), "hex");
         })
-            .catch(e => {
+            .catch((e) => {
             this.destroy(new LedgerStreamError(`Reading Ledger failed: ${e.message}`));
         });
     }
