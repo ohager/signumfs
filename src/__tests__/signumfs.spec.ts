@@ -5,6 +5,7 @@ import { DryLedger } from "../lib/dryLedger";
 import { Amount } from "@signumjs/util";
 import { unlink, stat } from "fs/promises";
 
+declare function fail(error?: any): never;
 describe("SignumFS", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -93,6 +94,40 @@ describe("SignumFS", () => {
         xsha512:
           "3929fee5d27a7e9693b1f0a60159b4aa5b9414e3a57415319457dfe13aa90e224fb03e3b5d863484c309dd6275b637d6a99bd87580574e7c5549124415dfb6c9",
       });
+    });
+    it("should throw on dry run - file: empty.txt", async () => {
+      const signumfs = new SignumFS({
+        dryRun: true,
+        chunksPerBlock: 256,
+        seed: "seed",
+        nodeHost: "http://localhost:6876",
+      });
+
+      try {
+        const tx = await signumfs.uploadFile({
+          filePath: path.join(__dirname, "./data", "empty.txt"),
+        });
+        fail("Should throw");
+      } catch (e: any) {
+        expect(e.message).toMatch("File is empty");
+      }
+    });
+    it("should throw on dry run no file, but dir", async () => {
+      const signumfs = new SignumFS({
+        dryRun: true,
+        chunksPerBlock: 256,
+        seed: "seed",
+        nodeHost: "http://localhost:6876",
+      });
+
+      try {
+        const tx = await signumfs.uploadFile({
+          filePath: path.join(__dirname, "./data"),
+        });
+        fail("Should throw");
+      } catch (e: any) {
+        expect(e.message).toMatch("Not a file");
+      }
     });
   });
   describe("downloadFile", () => {
