@@ -1,0 +1,11 @@
+.idea/
+.husky/
+src/
+coverage/
+*.log
+*.tgz
+*.csv
+tsconfig.json
+jest.config.js
+nodemon.json
+.prettierignore

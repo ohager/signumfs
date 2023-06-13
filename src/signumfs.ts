@@ -5,20 +5,23 @@ import {
   Address,
   Ledger,
   LedgerClientFactory,
+  Transaction,
+  TransactionArbitrarySubtype,
   TransactionId,
+  TransactionType,
 } from "@signumjs/core";
 import { generateMasterKeys, Keys } from "@signumjs/crypto";
 import { Readable, Transform, TransformCallback } from "stream";
 import { EventEmitter } from "events";
 import { createHash } from "crypto";
 import { Amount } from "@signumjs/util";
-import { transactionIdToHex } from "./lib/convertTransactionId";
-import { calculateTransactionFee } from "./lib/calculateTransactionFee";
-import { DryLedger } from "./lib/dryLedger";
-import { LedgerReadStream } from "./lib/ledgerReadStream";
 import { writeFile, stat } from "fs/promises";
 import { brotliDecompress, createBrotliCompress } from "zlib";
-import { SignumFSMetaData } from "./metadata";
+import { transactionIdToHex } from "@lib/core/convertTransactionId";
+import { calculateTransactionFee } from "@lib/core/calculateTransactionFee";
+import { DryLedger } from "@lib/core/dryLedger";
+import { LedgerReadStream } from "@lib/core/ledgerReadStream";
+import { SignumFSMetaData } from "@lib/core/metadata";
 
 /**
  * Creation context for {@link SignumFS} class
@@ -129,6 +132,9 @@ export class SignumFS extends EventEmitter {
     this.chunksPerBlock = chunksPerBlock;
   }
 
+  public getLedger(): Ledger {
+    return this.ledger;
+  }
   private async getFileInfo(filePath: string) {
     const info = await stat(filePath);
     if (!info.isFile()) {
@@ -150,6 +156,41 @@ export class SignumFS extends EventEmitter {
       size: info.size,
       name: basename(filePath),
     } as SignumFSFileInfo;
+  }
+
+  /**
+   * List all files uploaded per account
+   * @param accountId
+   */
+  async listFiles(accountId: string) {
+    let firstIndex = 0;
+    const files: Record<string, SignumFSMetaData> = {};
+    while (firstIndex !== -1) {
+      const { nextIndex, transactions } =
+        await this.ledger.account.getAccountTransactions({
+          type: TransactionType.Arbitrary,
+          subtype: TransactionArbitrarySubtype.Message,
+          accountId,
+          includeIndirect: false,
+          firstIndex,
+          lastIndex: firstIndex + 500,
+        });
+
+      for (let tx of transactions) {
+        try {
+          if (tx.attachment && tx.attachment.message) {
+            const json = JSON.parse(tx.attachment.message);
+            if (json.tp === "FIL" && json.xapp === "SignumFS") {
+              files[tx.transaction] = json;
+            }
+          }
+        } catch (_: any) {
+          // ignore
+        }
+      }
+      firstIndex = nextIndex || -1;
+    }
+    return files;
   }
 
   /**

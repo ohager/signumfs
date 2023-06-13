@@ -4,4 +4,8 @@ module.exports = {
   testEnvironment: "node",
   modulePathIgnorePatterns: ["mocks", "data"],
   collectCoverage: true,
+  moduleNameMapper: {
+    "^@lib/(.*)": "<rootDir>/src/lib/$1",
+    "^@commands/(.*)": "<rootDir>/src/commands/$1",
+  },
 };

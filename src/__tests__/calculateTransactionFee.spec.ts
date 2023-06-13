@@ -1,4 +1,4 @@
-import { calculateTransactionFee } from "../lib/calculateTransactionFee";
+import { calculateTransactionFee } from "../lib/core/calculateTransactionFee";
 
 function range(size: number, char: string = "A") {
   return Array.from({ length: size }, () => char).join("");

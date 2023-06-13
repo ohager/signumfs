@@ -1,7 +1,7 @@
 import {
   hexToTransactionId,
   transactionIdToHex,
-} from "../lib/convertTransactionId";
+} from "../lib/core/convertTransactionId";
 
 describe("convertTransactionId", () => {
   describe("transactionIdToHex", () => {

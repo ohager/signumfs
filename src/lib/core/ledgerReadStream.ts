@@ -1,6 +1,6 @@
 import { Readable } from "stream";
 import { Ledger } from "@signumjs/core";
-import { SignumFSMetaData } from "../metadata";
+import { SignumFSMetaData } from "./metadata";
 import { hexToTransactionId } from "./convertTransactionId";
 
 class LedgerStreamError extends Error {

@@ -1,1 +1,1 @@
-export { SignumFS, SignumFSContext, Defaults } from "./signumfs";
+export { SignumFS, type SignumFSContext, Defaults } from "./signumfs";

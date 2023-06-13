@@ -1,7 +1,7 @@
 import { expect, jest } from "@jest/globals";
 import { Defaults, SignumFS } from "../signumfs";
 import * as path from "path";
-import { DryLedger } from "../lib/dryLedger";
+import { DryLedger } from "../lib/core/dryLedger";
 import { Amount } from "@signumjs/util";
 import { unlink, stat } from "fs/promises";
 

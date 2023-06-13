@@ -1,19 +1,42 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "lib": ["es6"],
+    "target": "ESNext",
+    "types": ["node", "jest"],
+    "lib": ["ESNext"],
     "module": "commonjs",
-    "rootDir": "src",
+    "moduleResolution": "Node",
+    "allowJs": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "allowJs": true,
-    "outDir": "./dist",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "noImplicitAny": true,
-    "skipLibCheck": true
+    "isolatedModules": true,
+    "noImplicitAny": true /* Raise error on expressions and declarations with an implied 'any' type. */,
+    "strictNullChecks": true /* Enable strict null checks. */,
+    "strictFunctionTypes": true /* Enable strict checking of function types. */,
+    "noUnusedLocals": false /* Report errors on unused locals. */,
+    "noUnusedParameters": false /* Report errors on unused parameters. */,
+    "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
+    "noFallthroughCasesInSwitch": true /* Report errors for fallthrough cases in switch statement. */,
+    "importHelpers": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": false,
+    "sourceMap": true,
+    "rootDir": "./src/",
+    "baseUrl": "./src",
+    "outDir": "./dist",
+    "paths": {
+      "@commands/*": ["commands/*"],
+      "@lib/*": ["lib/*"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["src/__tests__/**/*"]
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "__tests__",
+    "coverage",
+    "dist",
+    "jest.config.js"
+  ]
 }
