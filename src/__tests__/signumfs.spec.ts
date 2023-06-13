@@ -1,5 +1,5 @@
 import { expect, jest } from "@jest/globals";
-import { SignumFS } from "../signumfs";
+import { Defaults, SignumFS } from "../signumfs";
 import * as path from "path";
 import { DryLedger } from "../lib/dryLedger";
 import { Amount } from "@signumjs/util";
@@ -127,6 +127,24 @@ describe("SignumFS", () => {
         fail("Should throw");
       } catch (e: any) {
         expect(e.message).toMatch("Not a file");
+      }
+    });
+    it("should throw on dry run max size exceeded", async () => {
+      Defaults.MaxUpload = 500;
+      const signumfs = new SignumFS({
+        dryRun: true,
+        chunksPerBlock: 256,
+        seed: "seed",
+        nodeHost: "http://localhost:6876",
+      });
+
+      try {
+        const tx = await signumfs.uploadFile({
+          filePath: path.join(__dirname, "./data", "test.ico"),
+        });
+        fail("Should throw");
+      } catch (e: any) {
+        expect(e.message).toMatch("File exceeds allowed size limit");
       }
     });
   });

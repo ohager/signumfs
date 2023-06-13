@@ -1,6 +1,6 @@
 import { promisify } from "util";
 import { basename } from "path";
-import { stat, createReadStream } from "fs";
+import { createReadStream } from "fs";
 import {
   Address,
   Ledger,
@@ -16,14 +16,31 @@ import { transactionIdToHex } from "./lib/convertTransactionId";
 import { calculateTransactionFee } from "./lib/calculateTransactionFee";
 import { DryLedger } from "./lib/dryLedger";
 import { LedgerReadStream } from "./lib/ledgerReadStream";
-import { writeFile } from "fs/promises";
+import { writeFile, stat } from "fs/promises";
 import { brotliDecompress, createBrotliCompress } from "zlib";
 import { SignumFSMetaData } from "./metadata";
 
+/**
+ * Creation context for {@link SignumFS} class
+ */
 export interface SignumFSContext {
+  /**
+   * The url of the node used
+   */
   nodeHost: string;
+  /**
+   * The seed/recovery phrase of the account that wants to upload (for download not really needed)
+   */
   seed: string;
+  /**
+   * Flag to run a test up/download without accessing the blockchain
+   * @note It uses a mock ledger instance that has static data.
+   */
   dryRun: boolean;
+  /**
+   * Amount of chunks uploaded/broadcast per block
+   * @default 128
+   */
   chunksPerBlock?: number;
 }
 
@@ -32,6 +49,9 @@ interface SignumFSFileInfo {
   name: string;
 }
 
+/**
+ * @internal
+ */
 interface CreateMetadataArgs {
   txId: string;
   sha512: string;
@@ -40,8 +60,19 @@ interface CreateMetadataArgs {
   compressedSize?: number;
 }
 
+/**
+ * Argument object for {@link SignumFS.uploadFile}
+ */
 interface UploadFileArgs {
+  /**
+   * The path of file to be uploaded
+   */
   filePath: string;
+  /**
+   * If set 'true', the file will be compressed before uploading.
+   * @note media files are usually pretty good compressed already. Use compression for text and document files.
+   * @default false
+   */
   shouldCompress?: boolean;
 }
 
@@ -64,12 +95,25 @@ export const Defaults = {
   MaxUpload: 2 * MebiByte,
 };
 
+/**
+ * Signum File System class
+ *
+ * Up- and download files to [Signum blockchain](https://signum.network)
+ *
+ */
 export class SignumFS extends EventEmitter {
   private readonly ledger: Ledger;
   private readonly keys: Keys;
   private readonly dryRun: boolean;
   private readonly chunksPerBlock: number;
 
+  /**
+   * Constructor
+   * @param nodeHost The url of the host to be used
+   * @param seed The seed/recovery phrase of the uploading account (not necessary for download
+   * @param dryRun If set `true` no ledger access will be done. Good for simulate an upload!
+   * @param chunksPerBlock Number of chunks/transactions per block. @default 128
+   */
   constructor({
     nodeHost,
     seed,
@@ -86,7 +130,7 @@ export class SignumFS extends EventEmitter {
   }
 
   private async getFileInfo(filePath: string) {
-    const info = await promisify(stat)(filePath);
+    const info = await stat(filePath);
     if (!info.isFile()) {
       throw new Error(`Not a file: ${filePath}`);
     }
@@ -108,6 +152,15 @@ export class SignumFS extends EventEmitter {
     } as SignumFSFileInfo;
   }
 
+  /**
+   * Uploads a file to the blockchain
+   * @see {@link SignumFS.downloadFile} to download a file
+   * @param filePath The path of the file to be uploaded
+   * @param shouldCompress Whether data shall be compressed before upload. @default false
+   * @fires SignumFS#start
+   * @fires SignumFS#progress
+   * @fires SignumFS#finish
+   */
   async uploadFile({ filePath, shouldCompress }: UploadFileArgs) {
     const info = await this.getFileInfo(filePath);
     let fileReadStream = createReadStream(filePath, {
@@ -115,6 +168,13 @@ export class SignumFS extends EventEmitter {
       highWaterMark: 1000 - 8,
     });
 
+    /**
+     * Upload start event
+     * @event SignumFS#start
+     * @type {object}
+     * @property info {SignumFSFileInfo} File info data
+     */
+    this.emit("start", { info });
     let result: UploadFileResult;
     if (shouldCompress) {
       result = await this.uploadChunks(
@@ -135,16 +195,26 @@ export class SignumFS extends EventEmitter {
     }
 
     const { txId, sha512, chunkCount, size } = result;
-    return this.createMetadata({
+    const metadata = await this.createMetadata({
       info,
       txId,
       sha512,
       chunkCount,
       compressedSize: shouldCompress ? size : undefined,
     });
+    /**
+     * Upload finish event
+     * @event SignumFS#finish
+     * @type {object}
+     * @property metadata {SignumFSMetaData} meta data on chain (SRC44)
+     * @property transaction {string} The transaction id of the metadata (starting transaction)
+     * @property feePlanck {string} The total costs in planck
+     */
+    this.emit("finish", metadata);
+    return metadata;
   }
 
-  private async uploadChunks(readable: Readable) {
+  private async uploadChunks(readable: Readable): Promise<UploadFileResult> {
     const hash = createHash("sha512");
     let txId = "0000000000000000";
     let refHash = "";
@@ -163,6 +233,14 @@ export class SignumFS extends EventEmitter {
       if (++chunkCount % this.chunksPerBlock === 0) {
         refHash = fullHash;
       }
+      /**
+       * Upload progress event
+       * @event SignumFS#progress
+       * @type {object}
+       * @property chunkCount {number} uploaded chunk count
+       * @property uploaded {number} Amount of uploaded data in bytes
+       */
+      this.emit("progress", { chunkCount, uploaded: hexSize / 2 });
     }
 
     return {
@@ -173,8 +251,23 @@ export class SignumFS extends EventEmitter {
     };
   }
 
+  /**
+   * Downloads file
+   * @param metadataTransactionId The transaction id of the meta data (returned by {@link SignumFS.uploadFile}
+   * @param filePath {optional} The alternative file path for downloaded file, otherwise name from meta data is being used
+   * @fires SignumFS#start
+   * @fires SignumFS#progress
+   * @fires SignumFS#finish
+   */
   async downloadFile({ metadataTransactionId, filePath }: DownloadFileArgs) {
     const readable = new LedgerReadStream(metadataTransactionId, this.ledger);
+    /**
+     * Download start event
+     * @event SignumFS#start
+     * @type {object}
+     * @property transaction {string} The starting transaction id (metadata)
+     */
+    this.emit("start", { transaction: metadataTransactionId });
     const { data, sha512 } = await this.downloadChunks(readable);
     let buf = data;
     if (!readable.metadata) {
@@ -192,15 +285,40 @@ export class SignumFS extends EventEmitter {
     }
 
     await writeFile(filePath ?? readable.metadata.nm, buf);
-
+    /**
+     * Download finish event
+     * @event SignumFS#finish
+     * @type {object}
+     * @property metadata {SignumFSMetaData} meta data on chain (SRC44)
+     */
+    this.emit("finished", { metadata: readable.metadata });
     return readable.metadata;
   }
 
   private async downloadChunks(readable: LedgerReadStream) {
     let data: Buffer | null = null;
     const hash = createHash("sha512");
+    let chunkCount = 0;
     for await (const chunk of readable) {
       data = !data ? chunk : Buffer.concat([chunk, data]);
+      if (readable.metadata) {
+        const { xchunks, xcms, xsize } = readable.metadata;
+        /**
+         * Download progress event
+         * @event SignumFS#progress
+         * @type {object}
+         * @property chunk {number} downloaded chunk count
+         * @property chunks {number} total chunks to download
+         * @property downloaded {number} Amount of downloaded data in bytes
+         * @property size {number} Total amount of data in bytes
+         */
+        this.emit("progress", {
+          chunk: ++chunkCount,
+          chunks: xchunks,
+          downloaded: data?.length || 0,
+          size: xcms ?? xsize,
+        });
+      }
     }
     if (!data) {
       throw Error("No data!");
