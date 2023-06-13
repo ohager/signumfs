@@ -3,6 +3,7 @@ import { SignumFS } from "../signumfs";
 import * as path from "path";
 import { DryLedger } from "../lib/dryLedger";
 import { Amount } from "@signumjs/util";
+import { unlink, stat } from "fs/promises";
 
 describe("SignumFS", () => {
   beforeEach(() => {
@@ -19,9 +20,9 @@ describe("SignumFS", () => {
 
       const sendMessage = jest.spyOn(DryLedger.message, "sendMessage");
 
-      const tx = await signumfs.uploadFile(
-        path.join(__dirname, "./data", "testfile1.txt")
-      );
+      const tx = await signumfs.uploadFile({
+        filePath: path.join(__dirname, "./data", "testfile1.txt"),
+      });
       expect(sendMessage).toBeCalledTimes(3);
       expect(tx.feePlanck).toEqual(Amount.fromSigna(0.03).getPlanck());
       expect(tx.metadata).toEqual({
@@ -46,9 +47,9 @@ describe("SignumFS", () => {
 
       const sendMessage = jest.spyOn(DryLedger.message, "sendMessage");
 
-      const tx = await signumfs.uploadFile(
-        path.join(__dirname, "./data", "test.ico")
-      );
+      const tx = await signumfs.uploadFile({
+        filePath: path.join(__dirname, "./data", "test.ico"),
+      });
       expect(sendMessage).toBeCalledTimes(17);
       expect(tx.feePlanck).toEqual(Amount.fromSigna(0.17).getPlanck());
       expect(tx.metadata).toEqual({
@@ -73,7 +74,26 @@ describe("SignumFS", () => {
         nodeHost: "http://localhost:6876",
       });
 
-      // const result = await signumfs.downloadFile("15771118143703187517");
+      const filePath = path.join(__dirname, "testdownload.txt");
+      const result = await signumfs.downloadFile({
+        metadataTransactionId: "14285717817138105801",
+        filePath,
+      });
+
+      const info = await stat(filePath);
+      expect(info.isFile()).toBeTruthy();
+      await unlink(filePath);
+      expect(result).toEqual({
+        nm: "testfile1.txt",
+        tp: "OTH",
+        vs: 1,
+        xapp: "SignumFS",
+        xchunks: 2,
+        xid: "15771118143703187517",
+        xsha512:
+          "b30dbcf148b135ae85356814e1421777dece6f5b4140071660867fe803f73d3cf7def628aa6949a8f5a69d07d1df26d11ebba58aa5a7d21821bc1e9c746155ff",
+        xsize: 1104,
+      });
     });
   });
 });

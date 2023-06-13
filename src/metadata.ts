@@ -3,8 +3,8 @@ export interface SignumFSMetaData {
   tp: "OTH"; // other type
   xapp: "SignumFS"; // app name
   nm: string; // file name
-  xcmp?: boolean; // is compressed?
-  xcms?: boolean; // size compressed
+  xcmp?: "br"; // is compressed and how?
+  xcms?: number; // size compressed
   xsize: number; // size in bytes original
   xchunks: number; // how many chunks
   xid: string; // the starting transaction id

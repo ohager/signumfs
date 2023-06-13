@@ -17,6 +17,7 @@ import { calculateTransactionFee } from "./lib/calculateTransactionFee";
 import { DryLedger } from "./lib/dryLedger";
 import { LedgerReadStream } from "./lib/ledgerReadStream";
 import { writeFile } from "fs/promises";
+import { createBrotliCompress } from "zlib";
 
 export interface SignumFSContext {
   nodeHost: string;
@@ -35,13 +36,24 @@ interface CreateMetadataArgs {
   sha512: string;
   info: SignumFSFileInfo;
   chunkCount: number;
+  compressed: boolean;
+  size: number;
+}
+
+interface UploadFileArgs {
+  filePath: string;
+  shouldCompress?: boolean;
+}
+interface DownloadFileArgs {
+  metadataTransactionId: string;
+  filePath?: string;
 }
 
 const KibiByte = 1024;
 const MebiByte = 1024 * KibiByte;
 export const Defaults = {
   ChunkSize: 128,
-  MaxUpload: 5 * MebiByte,
+  MaxUpload: 2 * MebiByte,
 };
 
 export class SignumFS extends EventEmitter {
@@ -76,7 +88,9 @@ export class SignumFS extends EventEmitter {
 
     if (info.size > Defaults.MaxUpload) {
       throw new Error(
-        `File exceeds allowed size limit (${Defaults.MaxUpload} byte): ${filePath}`
+        `File exceeds allowed size limit (${
+          Defaults.MaxUpload / KibiByte
+        } KiB): ${filePath}`
       );
     }
 
@@ -86,14 +100,26 @@ export class SignumFS extends EventEmitter {
     } as SignumFSFileInfo;
   }
 
-  async uploadFile(filePath: string) {
+  async uploadFile({ filePath, shouldCompress }: UploadFileArgs) {
     const info = await this.getFileInfo(filePath);
     const reader = createReadStream(filePath, {
       encoding: "hex",
       highWaterMark: 1000 - 8,
     });
-    const { txId, sha512, chunkCount } = await this.uploadChunks(reader);
-    return this.createMetadata({ info, txId, sha512, chunkCount });
+
+    if (shouldCompress) {
+      reader.pipe(createBrotliCompress());
+    }
+
+    const { txId, sha512, chunkCount, size } = await this.uploadChunks(reader);
+    return this.createMetadata({
+      info,
+      txId,
+      sha512,
+      chunkCount,
+      compressed: !!shouldCompress,
+      size,
+    });
   }
 
   private async uploadChunks(readable: Readable) {
@@ -101,9 +127,11 @@ export class SignumFS extends EventEmitter {
     let txId = "0000000000000000";
     let refHash = "";
     let chunkCount = 0;
+    let size = 0;
     for await (const chunk of readable) {
       const message = transactionIdToHex(txId) + chunk;
       hash.update(chunk);
+      size += chunk.length;
       const { transaction, fullHash } = await this.uploadDataToLedger(
         message,
         false,
@@ -121,11 +149,12 @@ export class SignumFS extends EventEmitter {
       sha512: hash.digest("hex"),
       txId,
       chunkCount,
+      size,
     };
   }
 
-  async downloadFile(metadataTxId: string) {
-    const readable = new LedgerReadStream(metadataTxId, this.ledger);
+  async downloadFile({ metadataTransactionId, filePath }: DownloadFileArgs) {
+    const readable = new LedgerReadStream(metadataTransactionId, this.ledger);
     const { data, sha512 } = await this.downloadChunks(readable);
     if (!readable.metadata) {
       throw new Error("No metadata available");
@@ -135,43 +164,48 @@ export class SignumFS extends EventEmitter {
       // TODO: consider decompression
     }
 
-    await writeFile("signum-" + readable.metadata.nm, data);
-
     if (readable.metadata.xsha512 !== sha512) {
       throw new Error(
         "Hashes don't match - most probably the downloaded file is corrupted"
       );
     }
 
+    await writeFile(filePath ?? readable.metadata.nm, data);
+
     return readable.metadata;
   }
 
   private async downloadChunks(readable: LedgerReadStream) {
-    let buf: Buffer | null = null;
+    let data: Buffer | null = null;
     const hash = createHash("sha512");
     for await (const chunk of readable) {
-      hash.update(chunk.toString("hex"));
-      buf = !buf ? chunk : Buffer.concat([chunk, buf]);
+      data = !data ? chunk : Buffer.concat([chunk, data]);
     }
-    if (!buf) {
+    if (!data) {
       throw Error("No data!");
     }
+    hash.update(data.toString("hex"));
     return {
-      data: buf,
+      data,
       sha512: hash.digest("hex"),
     };
   }
+
   private async createMetadata({
     txId,
     sha512,
     info,
     chunkCount,
+    compressed,
+    size,
   }: CreateMetadataArgs) {
     const metadata = {
       vs: 1,
-      tp: "OTH",
+      tp: "FIL",
       nm: info.name,
       xapp: "SignumFS",
+      xcmp: compressed ? "br" : undefined,
+      xcms: size !== info.size ? size : undefined,
       xsize: info.size,
       xchunks: chunkCount,
       xid: txId,
