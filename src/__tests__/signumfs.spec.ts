@@ -27,7 +27,7 @@ describe("SignumFS", () => {
       expect(tx.feePlanck).toEqual(Amount.fromSigna(0.03).getPlanck());
       expect(tx.metadata).toEqual({
         vs: 1,
-        tp: "OTH",
+        tp: "FIL",
         nm: "testfile1.txt",
         xapp: "SignumFS",
         xsize: 1104,
@@ -35,6 +35,36 @@ describe("SignumFS", () => {
         xid: "5938536618993977709",
         xsha512:
           "b30dbcf148b135ae85356814e1421777dece6f5b4140071660867fe803f73d3cf7def628aa6949a8f5a69d07d1df26d11ebba58aa5a7d21821bc1e9c746155ff",
+      });
+    });
+    it("should run a dry run - file: testfile1.txt - compression", async () => {
+      const signumfs = new SignumFS({
+        dryRun: true,
+        chunksPerBlock: 256,
+        seed: "seed",
+        nodeHost: "http://localhost:6876",
+      });
+
+      const sendMessage = jest.spyOn(DryLedger.message, "sendMessage");
+
+      const tx = await signumfs.uploadFile({
+        filePath: path.join(__dirname, "./data", "testfile1.txt"),
+        shouldCompress: true,
+      });
+      expect(sendMessage).toBeCalledTimes(2);
+      expect(tx.feePlanck).toEqual(Amount.fromSigna(0.02).getPlanck());
+      expect(tx.metadata).toEqual({
+        vs: 1,
+        tp: "FIL",
+        nm: "testfile1.txt",
+        xapp: "SignumFS",
+        xsize: 1104,
+        xchunks: 1,
+        xcmp: "br",
+        xcms: 373,
+        xid: "2527636466048431471",
+        xsha512:
+          "a01b565cb28dd7257a93b2d31994821ab0f39e35dcaeab5c4d2d591ab52aa76980f783ab315a8cb94b66fdb4fc26fa3a8e90c1cbd814e2335ffb36c61003700d",
       });
     });
     it("should run a dry run - file: test.ico", async () => {
@@ -54,7 +84,7 @@ describe("SignumFS", () => {
       expect(tx.feePlanck).toEqual(Amount.fromSigna(0.17).getPlanck());
       expect(tx.metadata).toEqual({
         vs: 1,
-        tp: "OTH",
+        tp: "FIL",
         nm: "test.ico",
         xapp: "SignumFS",
         xsize: 15406,

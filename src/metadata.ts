@@ -1,6 +1,6 @@
 export interface SignumFSMetaData {
   vs: 1;
-  tp: "OTH"; // other type
+  tp: "FIL"; // other type
   xapp: "SignumFS"; // app name
   nm: string; // file name
   xcmp?: "br"; // is compressed and how?

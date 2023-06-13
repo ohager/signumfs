@@ -8,7 +8,7 @@ import {
   TransactionId,
 } from "@signumjs/core";
 import { generateMasterKeys, Keys } from "@signumjs/crypto";
-import { Readable } from "stream";
+import { Readable, Transform, TransformCallback } from "stream";
 import { EventEmitter } from "events";
 import { createHash } from "crypto";
 import { Amount } from "@signumjs/util";
@@ -17,7 +17,8 @@ import { calculateTransactionFee } from "./lib/calculateTransactionFee";
 import { DryLedger } from "./lib/dryLedger";
 import { LedgerReadStream } from "./lib/ledgerReadStream";
 import { writeFile } from "fs/promises";
-import { createBrotliCompress } from "zlib";
+import { brotliDecompress, createBrotliCompress } from "zlib";
+import { SignumFSMetaData } from "./metadata";
 
 export interface SignumFSContext {
   nodeHost: string;
@@ -36,14 +37,21 @@ interface CreateMetadataArgs {
   sha512: string;
   info: SignumFSFileInfo;
   chunkCount: number;
-  compressed: boolean;
-  size: number;
+  compressedSize?: number;
 }
 
 interface UploadFileArgs {
   filePath: string;
   shouldCompress?: boolean;
 }
+
+interface UploadFileResult {
+  sha512: string;
+  txId: string;
+  chunkCount: number;
+  size: number;
+}
+
 interface DownloadFileArgs {
   metadataTransactionId: string;
   filePath?: string;
@@ -102,23 +110,37 @@ export class SignumFS extends EventEmitter {
 
   async uploadFile({ filePath, shouldCompress }: UploadFileArgs) {
     const info = await this.getFileInfo(filePath);
-    const reader = createReadStream(filePath, {
-      encoding: "hex",
+    let fileReadStream = createReadStream(filePath, {
+      encoding: shouldCompress ? "binary" : "hex",
       highWaterMark: 1000 - 8,
     });
 
+    let result: UploadFileResult;
     if (shouldCompress) {
-      reader.pipe(createBrotliCompress());
+      result = await this.uploadChunks(
+        fileReadStream.pipe(createBrotliCompress()).pipe(
+          new Transform({
+            transform(
+              chunk: any,
+              encoding: BufferEncoding,
+              callback: TransformCallback
+            ) {
+              callback(null, chunk.toString("hex"));
+            },
+          })
+        )
+      );
+    } else {
+      result = await this.uploadChunks(fileReadStream);
     }
 
-    const { txId, sha512, chunkCount, size } = await this.uploadChunks(reader);
+    const { txId, sha512, chunkCount, size } = result;
     return this.createMetadata({
       info,
       txId,
       sha512,
       chunkCount,
-      compressed: !!shouldCompress,
-      size,
+      compressedSize: shouldCompress ? size : undefined,
     });
   }
 
@@ -127,11 +149,11 @@ export class SignumFS extends EventEmitter {
     let txId = "0000000000000000";
     let refHash = "";
     let chunkCount = 0;
-    let size = 0;
+    let hexSize = 0;
     for await (const chunk of readable) {
       const message = transactionIdToHex(txId) + chunk;
       hash.update(chunk);
-      size += chunk.length;
+      hexSize += chunk.length;
       const { transaction, fullHash } = await this.uploadDataToLedger(
         message,
         false,
@@ -143,25 +165,20 @@ export class SignumFS extends EventEmitter {
       }
     }
 
-    // TODO: consider compression
-
     return {
       sha512: hash.digest("hex"),
       txId,
       chunkCount,
-      size,
+      size: hexSize / 2,
     };
   }
 
   async downloadFile({ metadataTransactionId, filePath }: DownloadFileArgs) {
     const readable = new LedgerReadStream(metadataTransactionId, this.ledger);
     const { data, sha512 } = await this.downloadChunks(readable);
+    let buf = data;
     if (!readable.metadata) {
       throw new Error("No metadata available");
-    }
-
-    if (readable.metadata.xcmp) {
-      // TODO: consider decompression
     }
 
     if (readable.metadata.xsha512 !== sha512) {
@@ -170,7 +187,11 @@ export class SignumFS extends EventEmitter {
       );
     }
 
-    await writeFile(filePath ?? readable.metadata.nm, data);
+    if (readable.metadata.xcmp === "br") {
+      buf = await promisify(brotliDecompress)(data);
+    }
+
+    await writeFile(filePath ?? readable.metadata.nm, buf);
 
     return readable.metadata;
   }
@@ -196,21 +217,23 @@ export class SignumFS extends EventEmitter {
     sha512,
     info,
     chunkCount,
-    compressed,
-    size,
+    compressedSize,
   }: CreateMetadataArgs) {
     const metadata = {
       vs: 1,
       tp: "FIL",
       nm: info.name,
       xapp: "SignumFS",
-      xcmp: compressed ? "br" : undefined,
-      xcms: size !== info.size ? size : undefined,
       xsize: info.size,
       xchunks: chunkCount,
       xid: txId,
       xsha512: sha512,
-    };
+    } as SignumFSMetaData;
+
+    if (compressedSize) {
+      metadata.xcmp = "br";
+      metadata.xcms = compressedSize;
+    }
     const transaction = await this.uploadDataToLedger(
       JSON.stringify(metadata),
       true
