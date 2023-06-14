@@ -27,7 +27,7 @@ function shortenString(
     ? str.substring(0, offset) + delimiter + str.substring(str.length - offset)
     : str;
 }
-export async function ls(opts: any, profile: ProfileData) {
+export async function list(opts: any, profile: ProfileData) {
   const fs = new SignumFS({
     dryRun: opts.try,
     seed: profile.seed,

@@ -18,7 +18,10 @@ import { Amount } from "@signumjs/util";
 import { writeFile, stat } from "fs/promises";
 import { brotliDecompress, createBrotliCompress } from "zlib";
 import { transactionIdToHex } from "@lib/core/convertTransactionId";
-import { calculateTransactionFee } from "@lib/core/calculateTransactionFee";
+import {
+  calculateTransactionFee,
+  calculateTransactionFeePerMessage,
+} from "@lib/core/calculateTransactionFeePerMessage";
 import { DryLedger } from "@lib/core/dryLedger";
 import { LedgerReadStream } from "@lib/core/ledgerReadStream";
 import { SignumFSMetaData } from "@lib/core/metadata";
@@ -397,10 +400,11 @@ export class SignumFS extends EventEmitter {
       JSON.stringify(metadata),
       true
     );
+    const feePlanck = calculateTransactionFee(metadata.xcms || metadata.xsize)
+      .add(Amount.fromSigna(0.02))
+      .getPlanck();
     return {
-      feePlanck: Amount.fromSigna(0.01)
-        .multiply(chunkCount + 1)
-        .getPlanck(),
+      feePlanck,
       transaction,
       metadata,
     };
@@ -415,7 +419,7 @@ export class SignumFS extends EventEmitter {
       message: data,
       messageIsText: isText,
       deadline: 24,
-      feePlanck: calculateTransactionFee(data, isText).getPlanck(),
+      feePlanck: calculateTransactionFeePerMessage(data, isText).getPlanck(),
       recipientId: Address.fromPublicKey(this.keys.publicKey).getNumericId(), // send to self
       senderPrivateKey: this.keys.signPrivateKey,
       senderPublicKey: this.keys.publicKey,

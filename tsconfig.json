@@ -22,7 +22,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": false,
-    "sourceMap": true,
+    "sourceMap": false,
     "rootDir": "./src/",
     "baseUrl": "./src",
     "outDir": "./dist",

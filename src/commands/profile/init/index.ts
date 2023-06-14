@@ -4,8 +4,16 @@ import { promptConfirm } from "@lib/cli/promptConfirm";
 import { ProfileData } from "@lib/cli/profileData";
 import { generateMasterKeys } from "@signumjs/crypto";
 import { Address } from "@signumjs/core";
+import { showDisclaimer } from "@lib/cli/showDisclaimer";
 
 export const init = async () => {
+  showDisclaimer();
+  const accept = await promptConfirm("I understand and agree!");
+  if (!accept) {
+    console.info("Cancelled by User");
+    return;
+  }
+
   const hasProfile = await hasProfileData();
   if (hasProfile) {
     const overwrite = await promptConfirm(

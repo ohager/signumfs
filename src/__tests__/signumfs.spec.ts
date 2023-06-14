@@ -25,7 +25,7 @@ describe("SignumFS", () => {
         filePath: path.join(__dirname, "./data", "testfile1.txt"),
       });
       expect(sendMessage).toBeCalledTimes(3);
-      expect(tx.feePlanck).toEqual(Amount.fromSigna(0.03).getPlanck());
+      expect(tx.feePlanck).toEqual(Amount.fromSigna(0.09).getPlanck());
       expect(tx.metadata).toEqual({
         vs: 1,
         tp: "FIL",
@@ -53,7 +53,7 @@ describe("SignumFS", () => {
         shouldCompress: true,
       });
       expect(sendMessage).toBeCalledTimes(2);
-      expect(tx.feePlanck).toEqual(Amount.fromSigna(0.02).getPlanck());
+      expect(tx.feePlanck).toEqual(Amount.fromSigna(0.05).getPlanck());
       expect(tx.metadata).toEqual({
         vs: 1,
         tp: "FIL",
@@ -82,7 +82,7 @@ describe("SignumFS", () => {
         filePath: path.join(__dirname, "./data", "test.ico"),
       });
       expect(sendMessage).toBeCalledTimes(17);
-      expect(tx.feePlanck).toEqual(Amount.fromSigna(0.17).getPlanck());
+      expect(tx.feePlanck).toEqual(Amount.fromSigna(0.9).getPlanck());
       expect(tx.metadata).toEqual({
         vs: 1,
         tp: "FIL",

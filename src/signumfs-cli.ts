@@ -1,10 +1,11 @@
+#!/usr/bin/env node
 import { program } from "commander";
 import inquirer from "inquirer";
 import { show, init, reset } from "@commands/profile";
 import { ProfileData } from "@lib/cli/profileData";
 
 export { SignumFS } from "./signumfs";
-import { upload, ls, download } from "./commands";
+import { upload, list, download } from "./commands";
 
 const version = process.env.npm_package_version || "";
 
@@ -101,9 +102,8 @@ app
   );
 
 app
-  .command("ls")
-  .alias("list")
-  .alias("dir")
+  .command("list")
+  .alias("ls")
   .option(
     "-a, --account <string>",
     "Account Id, Address, or alias. If not given your own profile account is considered",
@@ -115,7 +115,7 @@ app
       startAction({
         opts,
         context: profileData,
-        action: ls,
+        action: list,
       })
     )
   );
