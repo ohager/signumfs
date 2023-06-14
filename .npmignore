@@ -1,5 +1,6 @@
 .idea/
 .husky/
+.github
 src/
 coverage/
 docs/
@@ -14,3 +15,4 @@ nodemon.json
 *.br
 typedoc.json
 sonar-project.properties
+
