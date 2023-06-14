@@ -1,3 +1,10 @@
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=ohager_signumfs&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=ohager_signumfs)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=ohager_signumfs&metric=bugs)](https://sonarcloud.io/summary/new_code?id=ohager_signumfs)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=ohager_signumfs&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=ohager_signumfs)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=ohager_signumfs&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=ohager_signumfs)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=ohager_signumfs&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=ohager_signumfs)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ohager_signumfs&metric=coverage)](https://sonarcloud.io/summary/new_code?id=ohager_signumfs)
+
 # SignumFS
 
 A simple on-chain file storage solution for the best [unknown blockchain platform](https://signum.network).
