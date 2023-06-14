@@ -107,7 +107,7 @@ const uploadinfo = await fs.uploadFile({
 const fileRecords = await fs.uploadFile("<accountId>");
 ```
 
-> See more in the [API Doc](./docs/index.html)
+> See more in the [API Doc](https://ohager.github.io/signumfs/)
 
 ## Limits and Considerations
 
