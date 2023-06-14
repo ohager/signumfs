@@ -3,11 +3,8 @@ import { program } from "commander";
 import inquirer from "inquirer";
 import { show, init, reset } from "@commands/profile";
 import { ProfileData } from "@lib/cli/profileData";
-
-export { SignumFS } from "./signumfs";
 import { upload, list, download } from "./commands";
-
-const version = process.env.npm_package_version || "";
+const { version } = require("../package.json");
 
 interface ActionArgs {
   opts: any;

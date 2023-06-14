@@ -12,3 +12,5 @@ jest.config.js
 nodemon.json
 .prettierignore
 *.br
+typedoc.json
+sonar-project.properties
