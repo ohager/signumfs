@@ -189,7 +189,7 @@ export class SignumFS extends EventEmitter {
 
       for (let tx of transactions) {
         try {
-          if (tx.attachment && tx.attachment.message) {
+          if (tx.attachment?.message) {
             const json = JSON.parse(tx.attachment.message);
             if (json.tp === "FIL" && json.xapp === "SignumFS") {
               files[tx.transaction] = json;
