@@ -133,3 +133,4 @@ dist
 # custom
 .idea
 testdownload.txt
+*.br
