@@ -17,6 +17,16 @@ async function resolveAccountId(acc: string, ledger: Ledger) {
   return account;
 }
 
+function shortenString(
+  str: string,
+  trimOffset: number = 20,
+  delimiter = "…"
+): string {
+  const offset = trimOffset / 2;
+  return str.length > trimOffset
+    ? str.substring(0, offset) + delimiter + str.substring(str.length - offset)
+    : str;
+}
 export async function ls(opts: any, profile: ProfileData) {
   const fs = new SignumFS({
     dryRun: opts.try,
@@ -35,13 +45,19 @@ export async function ls(opts: any, profile: ProfileData) {
     const records = Object.entries(fileData);
     spinner.succeed(`Fetched ${records.length} file records`);
     const tableData = records.map(([fileId, meta]) => {
+      const size = meta.xcms || meta.xsize;
+      const fee = Number(((size / 176) * 0.01 + 0.02).toFixed(2));
+      const compressed = meta.xcms
+        ? `${meta.xcmp} (${((meta.xcms / meta.xsize) * 100).toFixed(1)}%)`
+        : "-";
       return {
         fileId,
         name: meta.nm,
-        size: meta.xcms || meta.xsize,
+        size,
+        fee,
         chunks: meta.xchunks,
-        compressed: meta.xcmp || " ",
-        sha512: meta.xsha512,
+        compressed,
+        sha512: shortenString(meta.xsha512),
       };
     });
     console.table(tableData);

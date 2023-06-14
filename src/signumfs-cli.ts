@@ -7,6 +7,7 @@ export { SignumFS } from "./signumfs";
 import { upload, ls, download } from "./commands";
 
 const version = process.env.npm_package_version || "";
+
 interface ActionArgs {
   opts: any;
   context?: any;
@@ -65,10 +66,11 @@ const app = program.version(version).description(`
 
 app
   .command("upload")
+  .alias("up")
   .description("Upload a file")
   .option(
     "-t, --try",
-    "Runs without creating anything on chain. Good for testing purposes"
+    "Runs without creating anything on chain. Good for testing purposes and checking costs"
   )
   .option("-f, --file <string>", "Filename to upload")
   .option("-x, --compress", "Compress data before upload")
@@ -84,8 +86,10 @@ app
 
 app
   .command("download")
+  .alias("dl")
   .description("Download a file")
   .option("-f, --fileId <string>", "File Chain Id")
+  .option("-o, --outfile <string>", "Custom File Name")
   .action((opts) =>
     withProfile((profileData) =>
       startAction({
