@@ -36,7 +36,44 @@ Just run `npm i signumfs -g`
 
 `signumfs --help` to get more info
 
-// TODO
+```
+Usage: signumfs [options] [command]
+
+
+            @@@@@@@@  @@@@@@@
+         @@@@@    @@@@@    @@@@@
+           @@@  @@@  @@@ @@@@@
+    @@@      @@@@@     @@@@       @@@
+  @@@@@@@@ &@@@  @@@@@@@@ @@@@  @@@@@@@
+ @@@    @@@@       @@@      @@@@@    @@@
+ @@@  @@@ *@@@@           @@@  @@@  @@@@
+   @@@@@     @@@         @@@     @@@@@
+ @@@@  @@@  @@@           @@@@  @@@  @@@
+ @@@    @@@@@      @@@       @@@@    @@@
+  @@@@@@@  @@@  @@@@@@@@  @@@  @@@@@@@@
+    @@@       @@@@     @@@@@      @@@
+           @@@@  @@@  @@@  @@@
+         @@@@@    @@@@@    @@@@@
+            @@@@@@@  @@@@@@@@
+
+     SignumFS - Blockchain File Storage
+
+  Author: ohager
+  Version: 1.0.0
+
+
+Options:
+  -V, --version          output the version number
+  -h, --help             display help for command
+
+Commands:
+  upload|up [options]    Upload a file
+  download|dl [options]  Download a file
+  list|ls [options]      List all uploaded files
+  profile
+  help [command]         display help for command
+
+```
 
 # Disclaimer
 
