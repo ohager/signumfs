@@ -51,7 +51,7 @@ Usage: signumfs [options] [command]
      SignumFS - Blockchain File Storage
 
   Author: ohager
-  Version: 1.0.0
+  Version: 1.0.1
 
 
 Options:
@@ -75,6 +75,137 @@ Before you start you need to create your profile, i.e. storing your account data
 Just run `signumfs profile init` and follow the guides
 
 You can always `reset` and `show` your profile.
+
+### Files
+
+At this moment, only three simple commands are available
+
+#### Upload
+
+> Consider the [limitations](#limits-and-considerations) and also the [Disclaimer](#disclaimer)
+
+```
+Usage: signumfs upload|up [options]
+
+Upload a file
+
+Options:
+-t, --try            Runs without creating anything on chain. Good for testing purposes and checking costs
+-f, --file <string>  Filename to upload
+-x, --compress       Compress data before upload
+-h, --help           display help for command
+```
+
+Example:
+
+Uploads an image. Compression usually makes no sense, unless it's SVG
+
+```bash
+signumfs up -f ohager_avatar.png
+
+? Enter your PIN [hidden]
+✔ Uploaded Successfully
+┌──────────┬────────────────────────┐
+│ (index)  │         Values         │
+├──────────┼────────────────────────┤
+│   fee    │         '4.47'         │
+│  fileId  │ '12973307999043577690' │
+│  chunks  │           79           │
+│ uploaded │      '76.38 KiB'       │
+└──────────┴────────────────────────┘
+```
+
+Uploads a file with compression on. Text files can be dramatically reduced in size (>50% is not rare)!
+
+```bash
+signumfs up -f sometextfile.md -x
+```
+
+#### Download
+
+```
+Usage: signumfs download|dl [options]
+
+Download a file
+
+Options:
+  -f, --fileId <string>   File Chain Id
+  -o, --outfile <string>  Custom File Name
+  -h, --help              display help for command
+```
+
+**Examples**
+
+Simple download
+
+```bash
+signumfs download --fileId 12973307999043577690
+? Enter your PIN [hidden]
+✔ Downloaded Successfully
+File saved under: ohager_bat.png
+```
+
+Downloads to a custom file name
+
+```bash
+signumfs dl -f 12973307999043577690 -o ohager_signum_avatar.png
+? Enter your PIN [hidden]
+✔ Downloaded Successfully
+File saved under: /home/ohager/Pictures/ohager_signum_avatar.png
+```
+
+### List Files
+
+```
+Usage: signumfs list|ls [options]
+
+List all uploaded files
+
+Options:
+  -a, --account <string>  Account Id, Address, or alias. If not given your own profile account is considered (default: "")
+  -h, --help              display help for command
+```
+
+**Examples**
+
+List your own files
+
+```bash
+signumfs ls
+? Enter your PIN [hidden]
+✔ Fetched 1 file records for 9K9L-4CB5-88Y5-F5G4Z
+┌─────────┬────────────────────────┬──────────────────┬───────┬──────┬────────┬────────────┬─────────────────────────┐
+│ (index) │         fileId         │       name       │ size  │ fee  │ chunks │ compressed │         sha512          │
+├─────────┼────────────────────────┼──────────────────┼───────┼──────┼────────┼────────────┼─────────────────────────┤
+│    0    │ '12973307999043577690' │ 'ohager_bat.png' │ 78215 │ 4.46 │   79   │    '-'     │ '2b26642e30…a5823809dd' │
+└─────────┴────────────────────────┴──────────────────┴───────┴──────┴────────┴────────────┴─────────────────────────┘
+```
+
+List files of other accounts - you can use accountIds, addresses and also aliases (with TLD support: `<alias>:<tld>`)
+
+```bash
+signumfs ls --account  S-9K9L-4CB5-88Y5-F5G4Z
+? Enter your PIN [hidden]
+✔ Fetched 1 file records for 9K9L-4CB5-88Y5-F5G4Z
+┌─────────┬────────────────────────┬──────────────────┬───────┬──────┬────────┬────────────┬─────────────────────────┐
+│ (index) │         fileId         │       name       │ size  │ fee  │ chunks │ compressed │         sha512          │
+├─────────┼────────────────────────┼──────────────────┼───────┼──────┼────────┼────────────┼─────────────────────────┤
+│    0    │ '12973307999043577690' │ 'ohager_bat.png' │ 78215 │ 4.46 │   79   │    '-'     │ '2b26642e30…a5823809dd' │
+└─────────┴────────────────────────┴──────────────────┴───────┴──────┴────────┴────────────┴─────────────────────────┘
+```
+
+Using alias with tld
+
+```bash
+signumfs ls -a nostrd00d:nostr
+? Enter your PIN [hidden]
+✔ Fetched 1 file records for 9K9L-4CB5-88Y5-F5G4Z
+┌─────────┬────────────────────────┬──────────────────┬───────┬──────┬────────┬────────────┬─────────────────────────┐
+│ (index) │         fileId         │       name       │ size  │ fee  │ chunks │ compressed │         sha512          │
+├─────────┼────────────────────────┼──────────────────┼───────┼──────┼────────┼────────────┼─────────────────────────┤
+│    0    │ '12973307999043577690' │ 'ohager_bat.png' │ 78215 │ 4.46 │   79   │    '-'     │ '2b26642e30…a5823809dd' │
+└─────────┴────────────────────────┴──────────────────┴───────┴──────┴────────┴────────────┴─────────────────────────┘
+```
 
 ## API Usage
 
