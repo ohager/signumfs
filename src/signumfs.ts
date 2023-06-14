@@ -250,7 +250,9 @@ export class SignumFS extends EventEmitter {
      * @property feePlanck {string} The total costs in planck
      */
     this.emit("finish", metadata);
-    await unlink(infilePath);
+    if (shouldCompress) {
+      await unlink(infilePath);
+    }
     return metadata;
   }
 
