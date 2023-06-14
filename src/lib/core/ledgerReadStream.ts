@@ -5,6 +5,9 @@ import { hexToTransactionId } from "./convertTransactionId";
 import pRetry from "p-retry";
 import * as console from "console";
 
+/**
+ * @ignore
+ */
 class LedgerStreamError extends Error {
   constructor(message: string) {
     super(message);

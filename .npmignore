@@ -2,6 +2,7 @@
 .husky/
 src/
 coverage/
+docs/
 *.log
 *.tgz
 *.csv

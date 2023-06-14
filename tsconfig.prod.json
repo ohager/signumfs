@@ -37,6 +37,7 @@
     "__tests__",
     "coverage",
     "dist",
+    "docs",
     "jest.config.js"
   ]
 }

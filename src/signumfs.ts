@@ -99,6 +99,10 @@ interface DownloadFileArgs {
 
 const KibiByte = 1024;
 const MebiByte = 1024 * KibiByte;
+
+/**
+ * @ignore
+ */
 export const Defaults = {
   ChunkSize: 160,
   MaxUpload: MebiByte,

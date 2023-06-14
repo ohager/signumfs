@@ -30,7 +30,7 @@ Compression makes sense for textual data.
 
 Just run `npm i signumfs -g`
 
-## Usage
+## CLI Usage
 
 `signumfs --help` to get more info
 
@@ -74,6 +74,46 @@ Commands:
 ```
 
 > Credits to [CurbShifter](https://github.com/CurbShifter) who inspired me for this tool. He did something similar back in 2018
+
+### Profile
+
+Before you start you need to create your profile, i.e. storing your account data and set node url
+Just run `signumfs profile init` and follow the guides
+
+You can always `reset` and `show` your profile.
+
+## API Usage
+
+You can use the `SignumFS` class programmatically, having three methods
+
+- `uploadFile`
+- `downloadFile`
+- `listFiles`
+
+```ts
+const fs = new SignumFS({
+  dryRun: false,
+  seed: "<your_seed>",
+  nodeHost: "https://localhost:8125",
+});
+
+// saves from ledger into ./myfile.downloaded.txt
+const metadata = await fs.downloadFile({
+  metadataTransactionId: "1234", // transaction Id of the on-chain metadata
+  filePath: "./myfile.downloaded.txt",
+});
+
+// uploads file to ledger
+const uploadinfo = await fs.uploadFile({
+  file: "./myfile.txt",
+  shouldCompress: true,
+});
+
+// list file records per account
+const fileRecords = await fs.uploadFile("<accountId>");
+```
+
+> See more in the [API Doc](./docs/index.html)
 
 ## Limits and Considerations
 
