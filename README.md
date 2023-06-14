@@ -9,12 +9,6 @@
 
 A simple on-chain file storage solution for the best [unknown blockchain platform](https://signum.network).
 
----
-
-## STILL WORK IN PROGRESS - not available yet
-
----
-
 ## Motivation
 
 The Signum blockchain is capable of storing arbitrary data on-chain. Each transaction can carry up to 1000 bytes of data.
