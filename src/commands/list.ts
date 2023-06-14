@@ -36,7 +36,7 @@ export async function list(opts: any, profile: ProfileData) {
   const spinner = ora("Connecting...").start();
   try {
     const accountId = await resolveAccountId(
-      opts.account || "S-" + profile.address,
+      opts.account ?? "S-" + profile.address,
       fs.getLedger()
     );
     const address =
@@ -46,7 +46,7 @@ export async function list(opts: any, profile: ProfileData) {
     const records = Object.entries(fileData);
     spinner.succeed(`Fetched ${records.length} file records for ${address}`);
     const tableData = records.map(([fileId, meta]) => {
-      const size = meta.xcms || meta.xsize;
+      const size = meta.xcms ?? meta.xsize;
       const fee = Number(((size / 176) * 0.01 + 0.02).toFixed(2));
       const compressed = meta.xcms
         ? `${meta.xcmp} (${((meta.xcms / meta.xsize) * 100).toFixed(1)}%)`

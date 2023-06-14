@@ -8,7 +8,7 @@ export const promptConfirm = async (question?: string) => {
   const answer = await inquirer.prompt<Answers>([
     {
       type: "confirm",
-      message: question || "Are you sure?",
+      message: question ?? "Are you sure?",
       name: "confirmed",
     },
   ]);
