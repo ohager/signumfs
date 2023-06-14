@@ -36,7 +36,7 @@ export async function upload(opts: any, profile: ProfileData) {
       // @ts-ignore
       fileId: transaction.transaction,
       chunks: metadata.xchunks,
-      uploaded: `${((metadata.xcms ?? metadata.xsize) / 1024).toFixed(2)} KiB`,
+      uploaded: `${((metadata.xcms || metadata.xsize) / 1024).toFixed(2)} KiB`,
     });
   } catch (e: any) {
     spinner.fail(e.message);

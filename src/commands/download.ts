@@ -25,7 +25,7 @@ export async function download(opts: any, profile: ProfileData) {
       metadataTransactionId: opts.fileId,
     });
     spinner.succeed("Downloaded Successfully");
-    console.info("File saved under:", filePath ?? metadata.nm);
+    console.info("File saved under:", filePath || metadata.nm);
   } catch (e: any) {
     spinner.fail(e.message);
   }

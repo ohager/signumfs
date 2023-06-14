@@ -199,7 +199,7 @@ export class SignumFS extends EventEmitter {
           // ignore
         }
       }
-      firstIndex = nextIndex ?? -1;
+      firstIndex = nextIndex || -1;
     }
     return files;
   }
@@ -330,7 +330,7 @@ export class SignumFS extends EventEmitter {
       buf = await promisify(brotliDecompress)(data);
     }
 
-    await writeFile(filePath ?? readable.metadata.nm, buf);
+    await writeFile(filePath || readable.metadata.nm, buf);
     /**
      * Download finish event
      * @event SignumFS#finish
@@ -361,8 +361,8 @@ export class SignumFS extends EventEmitter {
         this.emit("progress", {
           chunk: ++chunkCount,
           chunks: xchunks,
-          downloaded: data?.length ?? 0,
-          size: xcms ?? xsize,
+          downloaded: data?.length || 0,
+          size: xcms || xsize,
         });
       }
     }
@@ -402,7 +402,7 @@ export class SignumFS extends EventEmitter {
       JSON.stringify(metadata),
       true
     );
-    const feePlanck = calculateTransactionFee(metadata.xcms ?? metadata.xsize)
+    const feePlanck = calculateTransactionFee(metadata.xcms || metadata.xsize)
       .add(Amount.fromSigna(0.02))
       .getPlanck();
     return {
