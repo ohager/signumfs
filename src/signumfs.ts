@@ -250,9 +250,6 @@ export class SignumFS extends EventEmitter {
      * @property feePlanck {string} The total costs in planck
      */
     this.emit("finish", metadata);
-    if (shouldCompress) {
-      await unlink(infilePath);
-    }
     return metadata;
   }
 
@@ -265,7 +262,6 @@ export class SignumFS extends EventEmitter {
     for await (const chunk of readable) {
       const message = transactionIdToHex(txId) + chunk;
       hash.update(chunk);
-      console.log("chunk length:", chunk.length);
       hexSize += chunk.length;
       const { transaction, fullHash } = await this.uploadDataToLedger(
         message,
