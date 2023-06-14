@@ -1,6 +1,6 @@
 import { promisify } from "util";
-import { basename } from "path";
-import { createReadStream } from "fs";
+import { basename, join } from "path";
+import { createReadStream, createWriteStream } from "fs";
 import {
   Address,
   Ledger,
@@ -15,16 +15,18 @@ import { Readable, Transform, TransformCallback } from "stream";
 import { EventEmitter } from "events";
 import { createHash } from "crypto";
 import { Amount } from "@signumjs/util";
-import { writeFile, stat } from "fs/promises";
+import { writeFile, stat, unlink } from "fs/promises";
 import { brotliDecompress, createBrotliCompress } from "zlib";
 import { transactionIdToHex } from "@lib/core/convertTransactionId";
 import {
   calculateTransactionFee,
   calculateTransactionFeePerMessage,
-} from "@lib/core/calculateTransactionFeePerMessage";
+} from "@lib/core/calculateTransactionFee";
 import { DryLedger } from "@lib/core/dryLedger";
 import { LedgerReadStream } from "@lib/core/ledgerReadStream";
 import { SignumFSMetaData } from "@lib/core/metadata";
+import { cwd } from "process";
+import * as StreamPromises from "stream/promises";
 
 /**
  * Creation context for {@link SignumFS} class
@@ -207,8 +209,18 @@ export class SignumFS extends EventEmitter {
    */
   async uploadFile({ filePath, shouldCompress }: UploadFileArgs) {
     const info = await this.getFileInfo(filePath);
-    let fileReadStream = createReadStream(filePath, {
-      encoding: shouldCompress ? "binary" : "hex",
+    let infilePath = filePath;
+    if (shouldCompress) {
+      infilePath = join(cwd(), info.name + ".br");
+      await StreamPromises.pipeline([
+        createReadStream(filePath),
+        createBrotliCompress(),
+        createWriteStream(infilePath),
+      ]);
+    }
+
+    let fileReadStream = createReadStream(infilePath, {
+      encoding: "hex",
       highWaterMark: 1000 - 8,
     });
 
@@ -219,24 +231,7 @@ export class SignumFS extends EventEmitter {
      * @property info {SignumFSFileInfo} File info data
      */
     this.emit("start", { info });
-    let result: UploadFileResult;
-    if (shouldCompress) {
-      result = await this.uploadChunks(
-        fileReadStream.pipe(createBrotliCompress()).pipe(
-          new Transform({
-            transform(
-              chunk: any,
-              encoding: BufferEncoding,
-              callback: TransformCallback
-            ) {
-              callback(null, chunk.toString("hex"));
-            },
-          })
-        )
-      );
-    } else {
-      result = await this.uploadChunks(fileReadStream);
-    }
+    const result = await this.uploadChunks(fileReadStream);
 
     const { txId, sha512, chunkCount, size } = result;
     const metadata = await this.createMetadata({
@@ -255,6 +250,7 @@ export class SignumFS extends EventEmitter {
      * @property feePlanck {string} The total costs in planck
      */
     this.emit("finish", metadata);
+    await unlink(infilePath);
     return metadata;
   }
 
@@ -267,6 +263,7 @@ export class SignumFS extends EventEmitter {
     for await (const chunk of readable) {
       const message = transactionIdToHex(txId) + chunk;
       hash.update(chunk);
+      console.log("chunk length:", chunk.length);
       hexSize += chunk.length;
       const { transaction, fullHash } = await this.uploadDataToLedger(
         message,
