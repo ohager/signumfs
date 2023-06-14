@@ -115,17 +115,6 @@
             A simple on-chain file storage solution for the best
             <a href="https://signum.network">unknown blockchain platform</a>.
           </p>
-          <hr />
-          <a
-            id="md:still-work-in-progress---not-available-yet"
-            class="tsd-anchor"
-          ></a>
-          <h2>
-            <a href="#md:still-work-in-progress---not-available-yet"
-              >STILL WORK IN PROGRESS - not available yet</a
-            >
-          </h2>
-          <hr />
           <a id="md:motivation" class="tsd-anchor"></a>
           <h2><a href="#md:motivation">Motivation</a></h2>
           <p>
@@ -171,6 +160,20 @@
           </p>
           <a id="md:api-usage" class="tsd-anchor"></a>
           <h2><a href="#md:api-usage">API Usage</a></h2>
+          <p>
+            You can use the <code>SignumFS</code> class programmatically, having
+            three methods
+          </p>
+          <ul>
+            <li><code>uploadFile</code></li>
+            <li><code>downloadFile</code></li>
+            <li><code>listFiles</code></li>
+          </ul>
+          <pre><code class="language-ts"><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-4">fs</span><span class="hl-1"> = </span><span class="hl-5">new</span><span class="hl-1"> </span><span class="hl-6">SignumFS</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-2">dryRun:</span><span class="hl-1"> </span><span class="hl-5">false</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-2">seed:</span><span class="hl-1"> </span><span class="hl-7">&quot;&lt;your_seed&gt;&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-2">nodeHost:</span><span class="hl-1"> </span><span class="hl-7">&quot;https://localhost:8125&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">});</span><br/><br/><span class="hl-8">// saves from ledger into ./myfile.downloaded.txt</span><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-4">metadata</span><span class="hl-1"> = </span><span class="hl-9">await</span><span class="hl-1"> </span><span class="hl-2">fs</span><span class="hl-1">.</span><span class="hl-6">downloadFile</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-2">metadataTransactionId:</span><span class="hl-1"> </span><span class="hl-7">&quot;1234&quot;</span><span class="hl-1">, </span><span class="hl-8">// transaction Id of the on-chain metadata</span><br/><span class="hl-1">  </span><span class="hl-2">filePath:</span><span class="hl-1"> </span><span class="hl-7">&quot;./myfile.downloaded.txt&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">});</span><br/><br/><span class="hl-8">// uploads file to ledger</span><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-4">uploadinfo</span><span class="hl-1"> = </span><span class="hl-9">await</span><span class="hl-1"> </span><span class="hl-2">fs</span><span class="hl-1">.</span><span class="hl-6">uploadFile</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-2">file:</span><span class="hl-1"> </span><span class="hl-7">&quot;./myfile.txt&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-2">shouldCompress:</span><span class="hl-1"> </span><span class="hl-5">true</span><span class="hl-1">,</span><br/><span class="hl-1">});</span><br/><br/><span class="hl-8">// list file records per account</span><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-4">fileRecords</span><span class="hl-1"> = </span><span class="hl-9">await</span><span class="hl-1"> </span><span class="hl-2">fs</span><span class="hl-1">.</span><span class="hl-6">uploadFile</span><span class="hl-1">(</span><span class="hl-7">&quot;&lt;accountId&gt;&quot;</span><span class="hl-1">);</span>
+</code><button>Copy</button></pre>
+          <blockquote>
+            <p>See more in the <a href="./docs/index.html">API Doc</a></p>
+          </blockquote>
           <a id="md:limits-and-considerations" class="tsd-anchor"></a>
           <h2>
             <a href="#md:limits-and-considerations"
@@ -204,7 +207,7 @@
             When uploading larger files you might hit a limit on maximum
             referenced transactions reached:
           </p>
-          <pre><code><span class="hl-1">[</span><span class="hl-4">INFO</span><span class="hl-1">] </span><span class="hl-3">2023</span><span class="hl-1">-</span><span class="hl-3">06</span><span class="hl-1">-</span><span class="hl-3">14</span><span class="hl-1"> </span><span class="hl-3">09</span><span class="hl-1">:</span><span class="hl-3">23</span><span class="hl-1">:</span><span class="hl-3">45</span><span class="hl-1"> </span><span class="hl-2">brs</span><span class="hl-1">.</span><span class="hl-2">unconfirmedtransactions</span><span class="hl-1">.</span><span class="hl-2">UnconfirmedTransactionStoreImpl</span><span class="hl-1"> - </span><span class="hl-2">Transaction</span><span class="hl-1"> -</span><span class="hl-3">3662528926404861624</span><span class="hl-1">: </span><span class="hl-2">Not</span><span class="hl-1"> </span><span class="hl-2">added</span><span class="hl-1"> </span><span class="hl-2">because</span><span class="hl-1"> </span><span class="hl-2">too</span><span class="hl-1"> </span><span class="hl-2">many</span><span class="hl-1"> </span><span class="hl-2">transactions</span><span class="hl-1"> </span><span class="hl-5">with</span><span class="hl-1"> </span><span class="hl-2">referenced</span><span class="hl-1"> </span><span class="hl-2">full</span><span class="hl-1"> </span><span class="hl-2">hash</span>
+          <pre><code><span class="hl-1">[</span><span class="hl-4">INFO</span><span class="hl-1">] </span><span class="hl-3">2023</span><span class="hl-1">-</span><span class="hl-3">06</span><span class="hl-1">-</span><span class="hl-3">14</span><span class="hl-1"> </span><span class="hl-3">09</span><span class="hl-1">:</span><span class="hl-3">23</span><span class="hl-1">:</span><span class="hl-3">45</span><span class="hl-1"> </span><span class="hl-2">brs</span><span class="hl-1">.</span><span class="hl-2">unconfirmedtransactions</span><span class="hl-1">.</span><span class="hl-2">UnconfirmedTransactionStoreImpl</span><span class="hl-1"> - </span><span class="hl-2">Transaction</span><span class="hl-1"> -</span><span class="hl-3">3662528926404861624</span><span class="hl-1">: </span><span class="hl-2">Not</span><span class="hl-1"> </span><span class="hl-2">added</span><span class="hl-1"> </span><span class="hl-2">because</span><span class="hl-1"> </span><span class="hl-2">too</span><span class="hl-1"> </span><span class="hl-2">many</span><span class="hl-1"> </span><span class="hl-2">transactions</span><span class="hl-1"> </span><span class="hl-9">with</span><span class="hl-1"> </span><span class="hl-2">referenced</span><span class="hl-1"> </span><span class="hl-2">full</span><span class="hl-1"> </span><span class="hl-2">hash</span>
 </code><button>Copy</button></pre>
           <p>
             The default value is 5% of 8192 (cache transaction limit), which is
@@ -412,15 +415,6 @@
                     </li>
                     <li>
                       <ul>
-                        <li>
-                          <a
-                            href="#md:still-work-in-progress---not-available-yet"
-                            ><span
-                              >STILL WORK IN PROGRESS -<wbr /> not available
-                              yet</span
-                            ></a
-                          >
-                        </li>
                         <li>
                           <a href="#md:motivation"><span>Motivation</span></a>
                         </li>
