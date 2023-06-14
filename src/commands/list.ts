@@ -33,17 +33,18 @@ export async function list(opts: any, profile: ProfileData) {
     seed: profile.seed,
     nodeHost: profile.node,
   });
-  const spinner = ora(
-    `Fetching file data for account [${opts.account}]...`
-  ).start();
+  const spinner = ora("Connecting...").start();
   try {
     const accountId = await resolveAccountId(
       opts.account || "S-" + profile.address,
       fs.getLedger()
     );
+    const address =
+      Address.fromNumericId(accountId).getReedSolomonAddress(false);
+    spinner.text = `Fetching file records for ${address}...`;
     const fileData = await fs.listFiles(accountId);
     const records = Object.entries(fileData);
-    spinner.succeed(`Fetched ${records.length} file records`);
+    spinner.succeed(`Fetched ${records.length} file records for ${address}`);
     const tableData = records.map(([fileId, meta]) => {
       const size = meta.xcms || meta.xsize;
       const fee = Number(((size / 176) * 0.01 + 0.02).toFixed(2));
