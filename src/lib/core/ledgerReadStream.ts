@@ -2,6 +2,8 @@ import { Readable } from "stream";
 import { Ledger } from "@signumjs/core";
 import { SignumFSMetaData } from "./metadata";
 import { hexToTransactionId } from "./convertTransactionId";
+import pRetry from "p-retry";
+import * as console from "console";
 
 class LedgerStreamError extends Error {
   constructor(message: string) {
@@ -37,9 +39,23 @@ export class LedgerReadStream extends Readable {
       this.push(null);
       return;
     }
-
-    this.ledger.transaction
-      .getTransaction(this.nextTx)
+    pRetry(
+      async () => {
+        try {
+          return await this.ledger.transaction.getTransaction(this.nextTx);
+        } catch (e: any) {
+          throw new Error(e.message);
+        }
+      },
+      {
+        onFailedAttempt: (attempt) =>
+          console.debug(
+            `Could not fetch transaction [${this.nextTx}]:`,
+            attempt.message,
+            `- retrying ${attempt.attemptNumber}/${attempt.retriesLeft}`
+          ),
+      }
+    )
       .then((tx) => {
         if (!(tx.attachment && tx.attachment["version.Message"])) {
           this.destroy(

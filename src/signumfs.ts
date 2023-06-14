@@ -5,17 +5,16 @@ import {
   Address,
   Ledger,
   LedgerClientFactory,
-  Transaction,
   TransactionArbitrarySubtype,
   TransactionId,
   TransactionType,
 } from "@signumjs/core";
 import { generateMasterKeys, Keys } from "@signumjs/crypto";
-import { Readable, Transform, TransformCallback } from "stream";
+import { Readable } from "stream";
 import { EventEmitter } from "events";
 import { createHash } from "crypto";
 import { Amount } from "@signumjs/util";
-import { writeFile, stat, unlink } from "fs/promises";
+import { writeFile, stat } from "fs/promises";
 import { brotliDecompress, createBrotliCompress } from "zlib";
 import { transactionIdToHex } from "@lib/core/convertTransactionId";
 import {
@@ -27,6 +26,8 @@ import { LedgerReadStream } from "@lib/core/ledgerReadStream";
 import { SignumFSMetaData } from "@lib/core/metadata";
 import { cwd } from "process";
 import * as StreamPromises from "stream/promises";
+import pRetry from "p-retry";
+import console from "console";
 
 /**
  * Creation context for {@link SignumFS} class
@@ -99,8 +100,8 @@ interface DownloadFileArgs {
 const KibiByte = 1024;
 const MebiByte = 1024 * KibiByte;
 export const Defaults = {
-  ChunkSize: 128,
-  MaxUpload: 2 * MebiByte,
+  ChunkSize: 160,
+  MaxUpload: MebiByte,
 };
 
 /**
@@ -140,6 +141,7 @@ export class SignumFS extends EventEmitter {
   public getLedger(): Ledger {
     return this.ledger;
   }
+
   private async getFileInfo(filePath: string) {
     const info = await stat(filePath);
     if (!info.isFile()) {
@@ -263,6 +265,7 @@ export class SignumFS extends EventEmitter {
       const message = transactionIdToHex(txId) + chunk;
       hash.update(chunk);
       hexSize += chunk.length;
+      // @ts-ignore
       const { transaction, fullHash } = await this.uploadDataToLedger(
         message,
         false,
@@ -410,15 +413,36 @@ export class SignumFS extends EventEmitter {
     isText: boolean,
     refHash?: string
   ) {
-    return (await this.ledger.message.sendMessage({
-      message: data,
-      messageIsText: isText,
-      deadline: 24,
-      feePlanck: calculateTransactionFeePerMessage(data, isText).getPlanck(),
-      recipientId: Address.fromPublicKey(this.keys.publicKey).getNumericId(), // send to self
-      senderPrivateKey: this.keys.signPrivateKey,
-      senderPublicKey: this.keys.publicKey,
-      referencedTransactionFullHash: refHash,
-    })) as TransactionId;
+    return pRetry(
+      async () => {
+        try {
+          return (await this.ledger.message.sendMessage({
+            message: data,
+            messageIsText: isText,
+            deadline: 24,
+            feePlanck: calculateTransactionFeePerMessage(
+              data,
+              isText
+            ).getPlanck(),
+            recipientId: Address.fromPublicKey(
+              this.keys.publicKey
+            ).getNumericId(), // send to self
+            senderPrivateKey: this.keys.signPrivateKey,
+            senderPublicKey: this.keys.publicKey,
+            referencedTransactionFullHash: refHash,
+          })) as TransactionId;
+        } catch (e: any) {
+          throw new Error("Ledger Exception: " + e.message);
+        }
+      },
+      {
+        onFailedAttempt: (attempt) =>
+          console.debug(
+            `Could not send data:`,
+            attempt.message,
+            `- retrying ${attempt.attemptNumber}/${attempt.retriesLeft}`
+          ),
+      }
+    );
   }
 }

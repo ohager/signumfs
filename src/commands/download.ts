@@ -17,7 +17,7 @@ export async function download(opts: any, profile: ProfileData) {
   }
   const spinner = ora(`Downloading file ${opts.fileId}...`).start();
   fs.on("progress", (args) => {
-    spinner.text = `Downloading: Chunk ${args.chunkCount} - ${args.uploaded} bytes`;
+    spinner.text = `Downloading: Chunk ${args.chunk}/${args.chunks} - ${args.downloaded}/${args.size} bytes`;
   });
   try {
     const metadata = await fs.downloadFile({

@@ -6,6 +6,7 @@ coverage/
 *.tgz
 *.csv
 tsconfig.json
+tsconfig.prod.json
 jest.config.js
 nodemon.json
 .prettierignore

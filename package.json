@@ -15,6 +15,7 @@
     "build": "npm run clean && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "start": "npm run build && node dist/signumfs-cli.js",
     "test": "jest",
+    "prepack": "npm run clean && tsc -p tsconfig.prod.json && tsc-alias -p tsconfig.prod.json",
     "prepare": "husky install"
   },
   "engines": {
@@ -47,6 +48,7 @@
     "inquirer": "^8.2.5",
     "marked": "^5.1.0",
     "marked-terminal": "^5.2.0",
-    "ora": "^5.4.1"
+    "ora": "^5.4.1",
+    "p-retry": "^4.6.2"
   }
 }

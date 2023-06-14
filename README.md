@@ -17,15 +17,6 @@ Mind, that the data is publicly available and (at current time of writing) no ad
 Data can be compressed (using Brotli) optionally, but also keep in mind, that most media types are already compressed efficiently.
 Compression makes sense for textual data.
 
-## Limits and Considerations
-
-As space is a valuable resource on blockchain certain costs are involved: ~0.06 SIGNA/kB
-Furthermore, upload file size is limited to 2 MiB at the moment,
-resulting in 2,098 transactions à 0.06 SIGNA + 1 transaction à 0.02 SIGNA, summing up to 125.90 SIGNA.
-To not congest the chain the maximum amount of transactions per block is set to 128.
-So, full 2 MiB would be split into 17 Blocks each taking in avg. 4 minutes until confirmed.
-So taking ~68 Minutes until the entire file is confirmed by the network.
-
 ## Installation
 
 > Requires Node 16+ installed
@@ -73,6 +64,40 @@ Commands:
   profile
   help [command]         display help for command
 
+```
+
+> Credits to [CurbShifter](https://github.com/CurbShifter) who inspired me for this tool. He did something similar back in 2018
+
+## Limits and Considerations
+
+As space is a valuable resource on blockchain certain costs are involved: ~0.06 SIGNA/kB
+Furthermore, upload file size is limited to 1 MiB at the moment,
+resulting in 1,057 transactions à 0.06 SIGNA + 1 transaction à 0.02 SIGNA, summing up to 63.44 SIGNA.
+To not congest the chain the maximum amount of transactions per block is set to 160 per default.
+So, full 1 MiB would be split into 7 Blocks each taking in avg. 4 minutes until confirmed.
+So taking ~28 Minutes until the entire file is confirmed by the network.
+
+### Local Node
+
+Although you could use public nodes to upload, you should always use a local node:
+
+- faster
+- more stable
+- allow custom config
+
+#### Configuration
+
+When uploading larger files you might hit a limit on maximum referenced transactions reached:
+
+```
+[INFO] 2023-06-14 09:23:45 brs.unconfirmedtransactions.UnconfirmedTransactionStoreImpl - Transaction -3662528926404861624: Not added because too many transactions with referenced full hash
+```
+
+The default value is 5% of 8192 (cache transaction limit), which is about 400 references. The block splitting uses referenced transactions,
+so you might end up hitting the limit on a 1 MiB file. You can raise the limit in your configuration file:
+
+```
+P2P.maxUnconfirmedTransactionsFullHashReferencePercentage=15
 ```
 
 # Disclaimer

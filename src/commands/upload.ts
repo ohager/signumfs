@@ -33,6 +33,7 @@ export async function upload(opts: any, profile: ProfileData) {
     spinner.succeed("Uploaded Successfully");
     console.table({
       fee: Amount.fromPlanck(feePlanck).getSigna(),
+      // @ts-ignore
       fileId: transaction.transaction,
       chunks: metadata.xchunks,
       uploaded: `${((metadata.xcms || metadata.xsize) / 1024).toFixed(2)} KiB`,
